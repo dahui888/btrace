@@ -1,24 +1,27 @@
 ## btrace
 
-[README 中文版](./README.zh-CN.md)
+[README English version](./README.MD)
 
 ![](https://img.shields.io/badge/license-Apache-brightgreen.svg?style=flat)
 ![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
 ![](https://img.shields.io/badge/release-1.0.1-red.svg?style=flat)
 
-btrace(AKA RheaTrace) is a high performance Android trace tool which is based on [Systrace](https://developer.android.com/topic/performance/tracing), it support to [define custom events](https://developer.android.com/topic/performance/tracing/custom-events) automatically during building apk and using [bhook](https://github.com/bytedance/bhook) to provider more native events like IO.
+btrace(又名 RheaTrace) 是一个基于 [Systrace](https://developer.android.com/topic/performance/tracing) 实现的高性能 Android trace 工具，它支持在 App 编译期间自动注入自定义事件，并使用 [bhook](https://github.com/bytedance/bhook) 额外提供 IO 等 native 事件。
 
-## Key features
-Support to define custom events automatically, inject **Trace#beginSection(String)** and **Trace#endSection()** into app methods during building apk.
 
-Provider extra native events like IO to determine time-consuming reasons for methods conveniently.
+## 关键特征
 
-Support to only capture trace events of main thread on demand.
+支持自动注入自定义事件，在编译 Apk 期间为 App 方法自动注入**Trace#beginSection(String)** 和 **Trace#endSection()**。
 
-Easily use, high stability, lower latency than systrace.
+提供额外 IO 等 native 事件，方便定位耗时原因。
 
-## Getting started
-Import rhea-gradle-plugin as a dependency in your main build.gradle in the root of your project.
+支持仅采集主线程 trace 事件。
+
+使用便捷，稳定性高，性能优于 Systrace。
+
+## 开始
+
+在您项目根目录下 build.gradle 文件中增加 rhea-gradle-plugin 作为依赖。
 
 ```
 buildscript {
@@ -41,7 +44,7 @@ allprojects {
 }
 ```
 
-Then "apply" the plugin and import dependencies by adding the following lines to your app/build.gradle.
+接着在 app/build.gradle 文件中应用如下所示插件和依赖。
 
 ```
 dependencies {
@@ -52,92 +55,95 @@ dependencies {
 rheaTrace {
 
    compilation {
-      //for reducing apk size, you can use method id to trace custom events, default false.
+      //为减少 APK 体积, 你可以为 App 中需要跟踪的方法设置 id 以此来跟踪此自定义事件, 默认值 false。
       traceWithMethodID = false 
-      //decide which methods you don't want trace, default null.
-      traceFilterFilePath = "${project.rootDir}/rhea-trace/traceFilter.txt"
-      //keep name of custom event with specific method id, default null.
+      //该文件配置决定哪些方法您不希望跟踪, 默认值 null。
+      traceFilterFilePath = "$}/rhea-trace/traceFilter.txt"
+      //用特指定方法 id 来设置自定义事件名称, 默认值 null。
       applyMethodMappingFilePath = "${project.rootDir}/rhea-trace/keep-method-id.txt"
   }
 
    runtime {
-      //capture trace events of main thread only, default false.
+      //仅在主线程抓取跟踪事件, 默认值 false。
       mainThreadOnly true 
-      //start to capture trace events when launch app, default true.
+      //在 App 启动之初开始抓取跟踪事件, 默认值 true。
       startWhenAppLaunch true
-      //set a specified size of ring buffer which used to store atrace data in memory.
+      //指定内存存储 atrace 数据 ring buffer 的大小。
       atraceBufferSize "500000"
    }
 }
 ...
 apply plugin: 'com.bytedance.rhea-trace'
 ```
-About `rheaTrace `, Learn more from the [RheaTrace Gradle Config](./GRADLE_CONFIG.zh-CN.MD).
 
-At last,  check python version in your computer, RheaTrace only support python 2.7 because of systrace, and then config systrace environment into ***~/.bash_profile*** file.
+关于 `rheaTrace `，从[RheaTrace Gradle Config](./GRADLE_CONFIG.zh-CN.MD)中了解更多信息。
+
+最后，检测您电脑 python 版本，由于 Systrace 的关系 RheaTrace 仅支持 python 2.7 版本，请将 systrace 环境变量配置在 ***~/.bash_profile*** 文件中。
 
 ```
 export PATH=${PATH}:/Users/${user_name}/Library/Android/sdk/platform-tools/systrace
 ```
-## Usage
 
-Open terminal, change directory to **btrace/scripts/python/rheatrace**, execute command below.
+## 使用
+
+打开终端，将目录切换至 **btrace/scripts/python/rheatrace** 下，并执行如下命令。
 
 ```
 python rheatrace.py -v
 ```
-Then you will see output below.
+接着您将在终端看到如下输出。
 
 ```
 Current version is 1.0.1.
 ```
-RheaTrace retains the [Systrace command](https://developer.android.com/topic/performance/tracing/command-line) parameters, if you have used Systrace before, you will quickly learn how to use RheaTrace.
 
-### Syntax
-To generate the HTML report for app, you need to run `rheatrace` from the command line using the following syntax:
+RheaTrace 保留 [Systrace command](https://developer.android.com/topic/performance/tracing/command-line) 命令参数，如果您之前使用过 Systrace，您将很快了解如何使用 RheaTrace。
+
+### 语法
+
+如需为应用生成 HTML 报告，您需要使用以下语法通过命令行运行 `rheatrace`：
 
 ```
 python rheatrace.py [options] [categories]
 ```
-For example, the following command calls `rheatrace` to record device activity and generate a HTML report named mynewtrace.html. This list of categories is a reasonable default list for most devices.
+
+例如，以下命令会调用 `rheatrace` 来记录设备活动，并生成一个名为 mynewtrace.html 的 HTML 报告。此类别列表是大多数设备的合理默认列表。
 
 ```
 python rheatrace.py -a rhea.sample.android -t 5 -o ./output/mynewtrace.html sched freq idle am wm gfx view binder_driver hal dalvik camera input res
 ```
-
-### Global options
-|  Global options   | Description |
+### 全局选项
+|  全局选项	   | 说明 |
 |  ----  | ----  |
-| -h \| --help  | Show the help message. |
-| -l \| --list-categories  | Lists the tracing categories available to your connected device. |
+| -h \| --help  | 显示帮助消息。|
+| -l \| --list-categories  | 列出您的已连接设备可用的跟踪类别。|
 
-### Commands and command options
-|  Commands and options	   | Description |
+### 命令和命令选项
+|  命令和选项	  | 说明 |
 |  ----  | ----  |
-| -o file  | Write the HTML trace report to the specified file. If you don't specify this option, rheatrace saves your report to the same directory as rheatrace.py and names it systrace.html.|
-| -t N \| --time=N  | Trace device activity for N seconds. If you don't specify this option, rheatrace prompts you to end the trace by pressing the Enter key from the command line. |
-|  -b N \| --buf-size=N  | Use a trace buffer size of N kilobytes. This option lets you limit the total size of the data collected during a trace.|
-|  -k functions\|--ktrace=functions  | Trace the activity of specific kernel functions, specified in a comma-separated list.|
-|  -a app-name\|--app=app-name  | Enable tracing for specified app, this option must be set. The app must contain tracing instrumentation calls from the Trace class. You should specify this option whenever you profile your app—many libraries, such as RecyclerView, include tracing instrumentation calls that provide useful information when you enable app-level tracing.|
-|  --from-file=file-path  | Create an interactive HTML report from a file, such as TXT files that include raw trace data, instead of running a live trace.|
-|  -e device-serial\|--serial=device-serial  | Conduct the trace on a specific connected device, identified by its device serial number.|
-| categories	| Include tracing information for the system processes you specify, such as gfx for system processes that render graphics. You can run rheatrace with the -l command to see a list of services available to your connected device.|
+| -o file  | 将 HTML 跟踪报告写入指定的文件。如果您未指定此选项，rheatrace 会将报告保存到 rheatrace.py 所在的目录中，并将其命名为 systrace.html。|
+| -t N \| --time=N  | 跟踪设备活动 N 秒。如果您未指定此选项，systrace 会提示您在命令行中按 Enter 键结束跟踪。|
+|  -b N \| --buf-size=N  | 使用 N KB 的跟踪缓冲区大小。使用此选项，您可以限制跟踪期间收集到的数据的总大小。|
+|  -k functions\|--ktrace=functions  | 跟踪逗号分隔列表中指定的特定内核函数的活动。|
+|  -a app-name\|--app=app-name  | 指定 app 开启 trace 功能, 该选项必须设置。该应用必须包含 Trace 类中的跟踪检测调用。您应在分析应用时指定此选项。很多库（例如 RecyclerView）都包括跟踪检测调用，这些调用可在您启用应用级跟踪时提供有用的信息。如需了解详情，请参阅定义自定义事件。|
+|  --from-file=file-path  | 根据文件（例如包含原始跟踪数据的 TXT 文件）创建交互式 HTML 报告，而不是运行实时跟踪。|
+|  -e device-serial\|--serial=device-serial  | 在已连接的特定设备（由对应的设备序列号标识）上进行跟踪。|
+| categories	| 包含您指定的系统进程的跟踪信息，如 gfx 表示用于渲染图形的系统进程。您可以使用 -l 命令运行 systrace，以查看已连接设备可用的服务列表。|
 
-### Extensive options
+### 拓展选项
 
-|  Global options   | Description |
+|  全局选项   | 说明 |
 |  ----  | ----  |
-| -r \| --restart  | Before tracing app activities, force to stop the app and restart it. |
-| -v \| --version  | Check the current rheatrace version. |
-| --advanced-sys-time \| --advanced-sys-time  | How long in advance to open systrace, default value is 2 seconds.|
-| --debug \| --debug | Whether to enable debug log output. |
+| -r \| --restart  | 在跟踪 App 活动前, 强制关闭 App 并重启。|
+| -v \| --version  | 查看当前 rheatrace 版本。|
+| --advanced-sys-time \| --advanced-sys-time  | 提前多长时间开启 systrace，默认值是 2 秒。|
+| --debug \| --debug | 是否开启 debug 日志输出。|
 
+## 彩蛋功能
 
-## Easter Egg Feature
+RheaTrace 提供 Gradle 编译配置改变 App 运行时的 tracing 行为，但该方式每次需要重新打包，效率很低。为此，我们提供文件配置方式来改变 tracing 行为。
 
-RheaTrace provides Gradle compilation configuration to change the tracking behavior of the App when it is running, but it needs to be repackaged every time, which work low efficiency. So we provide file configuration ways to change tracking behavior.
-
-Create a Properties format file named `rheatrace.config`, the configurations that can be written are:
+创建名字为 `rheatrace.config` 的 Properties 格式文件，可写入的配置有：
 
 ```
 io=true
@@ -147,41 +153,37 @@ mainThreadOnly=true
 atraceBufferSize=100000
 startWhenAppLaunch=true
 ```
+接着，将该文件 push 至设备目录 `sdcard/rhea-trace/${应用包名}` 下，然后重启应用即可生效。
 
-Then, push the file to the device directory `sdcard/rhea-trace/${application package name}`, and then restart the application to take effect.
-
-| options   | defaults  | description  |
+|  参数   | 默认值  | 说明  |
 |  ----  | ----  | ----  |
-| io  | true | Whether to enable tracking io native related methods.|
-| classLoad  | fasle | Whether to enable tracking class loading events, only supports Android 8.0 and above, and the app build type is debuggable.|
-| memory  | fasle | Whether to enable tracking memory access events, only supports Android 8.0 and above, and the app build type is debuggable.|
-| mainThreadOnly  | fasle | Whether to capture trace events only on the main thread, if you only care about the main thread trace events, please set it to true.|
-| atraceBufferSize  | 100000 | Specify the size of the ring buffer to store atrace data in the memory. If its value is too small, the trace data will be incompletely written. If you capture multi-threaded trace data, it is recommended to set the value to about one million; the minimum value is 10,000. The maximum value is 5 million.|
-| startWhenAppLaunch  | true | Start to capture tracking events at the beginning of the app startup. If you do startup optimization, it is recommended to keep the value as true.|
+| io  | true | 是否开启跟踪 io native 相关方法。 |
+| classLoad  | fasle | 是否开启跟踪类加载事件，仅支持 Android 8.0 及以上，且 App 编译类型为 debuggable。 |
+| memory  | fasle | 是否开启跟踪内存访问事件，仅支持 Android 8.0 及以上，且 App 编译类型为 debuggable。|
+| mainThreadOnly  | fasle | 是否仅在主线程抓取跟踪事件，如果您仅关心主线程 trace 数据，请将其置为 true。|
+| atraceBufferSize  | 100000 | 指定内存存储 atrace 数据 ring buffer 的大小，如果其值过小会导致 trace 数据写入不完整，若您抓取多线程 trace 数据，建议将值设为百万左右量级；最小值为 1 万，最大值为 5 百万。|
+| startWhenAppLaunch  | true | 在 App 启动之初开始抓取跟踪事件，如果您做启动优化，建议将值保持为 true。|
 
 
+## 已知问题
 
-## Known Issues
+1. RheaTrace 仅支持 python2.7，请注意检查 python 环境。
+2. RheaTrace 暂不支持 Windows。
+3. RheaTrace 仅支持采集主进程的 trace 事件。
+4. RheaTrace 需要外置存储的读写权限，因此您需要手动赋予该权限。
+5. 如果您无法直接打开输出产物 `systrace.html` ，请用 `perfetto` 加载。
 
-1. RheaTrace only support python2.7, please check your python environment.
-2. RheaTrace does not currently support Windows.
-3. RheaTrace only support capture main process trace events.
-4. RheaTrace need read and write permissions of external storage, so you should grant the permission manually.
-5. if you can't open output file `systrace.html` directly, please using `perfetto` to load it.
+## 支持
 
-## Support
-1. Communicate on GitHub issues.
-2. Study the source code.
-3. Check [wiki](./INTRODUCTION.MD) or FAQ for help.
-4. Contact us kisson_cjw@hotmail.com.
-5. Join QQ group chat.
+1. 在 Github issue 上交流。
+2. 阅读源码。
+3. 查阅 [wiki](./INTRODUCTION.MD) 或 FAQ 寻求帮助。
+4. 联系我 kisson_cjw@hotmail.com。
 
-![](./assets/btrace-qq.jpeg)
-
-## Contributing
+## 贡献
 
 [Contributing Guide](./CONTRIBUTING.MD)
 
-## License
+## 许可证
 
 [Apache License](./LICENSE)
