@@ -1,7 +1,5 @@
 ## btrace
 
-[README English version](./README.MD)
-
 ![](https://img.shields.io/badge/license-Apache-brightgreen.svg?style=flat)
 ![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
 ![](https://img.shields.io/badge/release-1.0.1-red.svg?style=flat)
